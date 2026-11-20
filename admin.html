@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#18181b">
+  <title>Kasir & Owner | Garis Barber</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: { colors: { ink: "#09090b", panel: "#18181b", gold: "#f59e0b" } } } };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: "DM Sans", sans-serif; }
+    h1, h2, h3, .display { font-family: "Oswald", sans-serif; }
+    .form-control { width: 100%; border: 1px solid #3f3f46; border-radius: .75rem; background: #09090b; padding: .75rem 1rem; color: #f4f4f5; outline: none; }
+    .form-control:focus { border-color: #f59e0b; box-shadow: 0 0 0 2px rgb(245 158 11 / 15%); }
+    .form-control:disabled { cursor: not-allowed; opacity: .5; }
+    .form-control::placeholder { color: #71717a; }
+    dialog::backdrop { background: rgb(0 0 0 / 78%); backdrop-filter: blur(4px); }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body class="min-h-screen bg-ink text-zinc-100" data-page="admin">
+  <header class="border-b border-zinc-800 bg-zinc-950/90">
+    <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+      <a href="index.html" class="flex items-center gap-3"><span class="grid h-10 w-10 place-items-center rounded-xl bg-amber-500 text-xl font-bold text-zinc-950">G</span><span><span class="block display text-lg font-bold uppercase tracking-wider">Garis Barber</span><span class="block text-xs text-zinc-500">Manajemen usaha</span></span></a>
+      <a href="index.html" class="rounded-lg border border-zinc-700 px-4 py-2 text-sm font-semibold text-zinc-300 transition hover:border-amber-500 hover:text-amber-400">← Halaman pelanggan</a>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+    <section id="admin-login-panel" class="mx-auto max-w-md rounded-2xl border border-zinc-800 bg-panel p-6 sm:p-8">
+      <p class="text-xs font-bold uppercase tracking-[.3em] text-amber-400">Akses staf terverifikasi</p>
+      <h1 class="mt-2 display text-4xl font-bold uppercase">Login kasir / owner</h1>
+      <p class="mt-2 text-sm leading-6 text-zinc-400">Masuk dengan akun email/password yang dibuat di Supabase. Hak akses Kasir atau Owner ditentukan di database, bukan oleh PIN di browser.</p>
+      <p id="admin-login-notice" class="mt-5 hidden rounded-lg border border-amber-900 bg-amber-950/40 px-4 py-3 text-sm text-amber-200" role="status"></p>
+      <form id="admin-login-form" class="mt-5 space-y-4">
+        <label class="block text-sm font-medium text-zinc-300">Email<input class="form-control mt-2" name="email" type="email" autocomplete="username" placeholder="staf@example.com" required></label>
+        <label class="block text-sm font-medium text-zinc-300">Password<input class="form-control mt-2" name="password" type="password" autocomplete="current-password" minlength="8" required></label>
+        <p id="admin-login-error" class="hidden rounded-lg border border-red-900 bg-red-950/50 px-4 py-3 text-sm text-red-300" role="alert"></p>
+        <button class="w-full rounded-xl bg-amber-500 px-5 py-3 font-bold text-zinc-950 transition hover:bg-amber-400" type="submit">Masuk</button>
+      </form>
+      <p class="mt-5 border-t border-zinc-800 pt-4 text-xs leading-5 text-zinc-500">Pendaftaran akun publik dimatikan. Owner harus menetapkan role staf melalui SQL sesuai panduan.</p>
+    </section>
+
+    <div id="admin-dashboard" class="hidden">
+      <div class="mb-6 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+        <div><p id="admin-role-label" class="text-xs font-bold uppercase tracking-[.3em] text-amber-400">Panel staf</p><h1 class="mt-2 display text-4xl font-bold uppercase sm:text-5xl">Garis Barber</h1><p class="mt-2 text-sm text-zinc-400">Kelola antrean dan operasional usaha.</p></div>
+        <button id="admin-logout" class="self-start rounded-xl border border-zinc-700 px-5 py-3 font-semibold text-zinc-300 hover:bg-zinc-800 sm:self-auto" type="button">Keluar</button>
+      </div>
+      <nav class="mb-6 flex flex-wrap gap-2 border-b border-zinc-800 pb-4" aria-label="Navigasi dashboard">
+        <button id="tab-queue" class="rounded-lg bg-amber-500 px-4 py-2.5 text-sm font-bold text-zinc-950" type="button">Kelola Antrian Harian</button>
+        <button id="tab-owner" class="hidden rounded-lg border border-zinc-700 px-4 py-2.5 text-sm font-semibold text-zinc-300 hover:border-amber-500 hover:text-amber-400" type="button">Pengaturan &amp; Laporan</button>
+      </nav>
+
+      <section id="queue-panel">
+        <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div><h2 class="display text-3xl font-semibold uppercase">Antrian harian</h2><p class="mt-1 text-sm text-zinc-500">Kasir dapat mengelola status, walk-in, dan pembayaran.</p></div>
+          <div class="flex flex-wrap gap-3">
+            <label class="block text-sm font-medium text-zinc-300">Tanggal<input id="admin-date-filter" class="form-control mt-2 min-w-48" type="date"></label>
+            <button id="open-walkin-modal" class="self-end rounded-xl bg-amber-500 px-5 py-3 font-bold text-zinc-950 hover:bg-amber-400" type="button">+ Walk-in</button>
+          </div>
+        </div>
+        <section class="mb-6 grid gap-4 sm:grid-cols-4">
+          <article class="rounded-2xl border border-zinc-800 bg-panel p-5"><p class="text-xs font-semibold uppercase tracking-wider text-zinc-500">Jadwal aktif</p><p id="stat-total" class="mt-2 display text-4xl font-bold">0</p></article>
+          <article class="rounded-2xl border border-zinc-800 bg-panel p-5"><p class="text-xs font-semibold uppercase tracking-wider text-zinc-500">Menunggu</p><p id="stat-waiting" class="mt-2 display text-4xl font-bold text-amber-400">0</p></article>
+          <article class="rounded-2xl border border-zinc-800 bg-panel p-5"><p class="text-xs font-semibold uppercase tracking-wider text-zinc-500">Sedang dicukur</p><p id="stat-serving" class="mt-2 display text-4xl font-bold text-sky-400">0</p></article>
+          <article class="rounded-2xl border border-zinc-800 bg-panel p-5"><p class="text-xs font-semibold uppercase tracking-wider text-zinc-500">Omzet lunas</p><p id="stat-revenue" class="mt-2 display text-3xl font-bold text-emerald-400">Rp 0</p></article>
+        </section>
+        <div id="admin-notice" class="mb-4 hidden rounded-lg border border-red-900 bg-red-950/50 px-4 py-3 text-sm text-red-300" role="alert"></div>
+        <section class="overflow-hidden rounded-2xl border border-zinc-800 bg-panel">
+          <div class="overflow-x-auto">
+            <table class="w-full min-w-[1200px] text-left text-sm">
+              <thead class="bg-zinc-950/70 text-xs uppercase tracking-wider text-zinc-500"><tr><th class="px-5 py-4 font-semibold">Kode / Waktu</th><th class="px-5 py-4 font-semibold">Pelanggan</th><th class="px-5 py-4 font-semibold">Layanan / Barber</th><th class="px-5 py-4 font-semibold">Harga</th><th class="px-5 py-4 font-semibold">Status</th><th class="px-5 py-4 font-semibold">Pembayaran</th><th class="px-5 py-4 font-semibold">Aksi</th></tr></thead>
+              <tbody id="admin-booking-list" class="divide-y divide-zinc-800"></tbody>
+            </table>
+          </div>
+          <div id="admin-empty" class="hidden px-6 py-14 text-center"><p class="display text-xl font-semibold uppercase text-zinc-300">Belum ada antrian</p><p class="mt-2 text-sm text-zinc-500">Pilih tanggal lain atau tambahkan pelanggan walk-in.</p></div>
+        </section>
+      </section>
+
+      <section id="owner-panel" class="hidden space-y-6">
+        <div>
+          <p class="text-xs font-bold uppercase tracking-[.25em] text-amber-400">Khusus Admin / Owner</p>
+          <h2 class="mt-1 display text-3xl font-semibold uppercase">Pengaturan &amp; laporan</h2>
+        </div>
+        <div class="grid gap-6 xl:grid-cols-2">
+          <article class="rounded-2xl border border-zinc-800 bg-panel p-5 sm:p-6">
+            <h3 class="display text-2xl font-semibold uppercase">Kapster</h3>
+            <form id="barber-form" class="mt-4 flex flex-col gap-3 sm:flex-row">
+              <input class="form-control" name="name" maxlength="60" placeholder="Nama kapster baru" required>
+              <button class="shrink-0 rounded-xl bg-amber-500 px-5 py-3 font-bold text-zinc-950" type="submit">Tambah</button>
+            </form>
+            <p id="barber-error" class="mt-3 hidden text-sm text-red-300" role="alert"></p>
+            <ul id="barber-list" class="mt-4 divide-y divide-zinc-800"></ul>
+          </article>
+          <article class="rounded-2xl border border-zinc-800 bg-panel p-5 sm:p-6">
+            <h3 class="display text-2xl font-semibold uppercase">Layanan &amp; harga</h3>
+            <form id="service-form" class="mt-4 grid gap-3 sm:grid-cols-[1fr_150px_auto]">
+              <input class="form-control" name="name" maxlength="60" placeholder="Nama layanan" required>
+              <input class="form-control" name="price" type="number" min="0" step="1000" placeholder="Harga (Rp)" required>
+              <button class="rounded-xl bg-amber-500 px-5 py-3 font-bold text-zinc-950" type="submit">Tambah</button>
+            </form>
+            <p id="service-error" class="mt-3 hidden text-sm text-red-300" role="alert"></p>
+            <ul id="service-list" class="mt-4 divide-y divide-zinc-800"></ul>
+          </article>
+          <article class="rounded-2xl border border-zinc-800 bg-panel p-5 sm:p-6">
+            <h3 class="display text-2xl font-semibold uppercase">Jadwal libur kapster</h3>
+            <form id="holiday-form" class="mt-4 grid gap-3 sm:grid-cols-[1fr_180px_auto]">
+              <select id="holiday-barber" class="form-control" name="barber_id" required><option value="" disabled selected>Pilih kapster</option></select>
+              <input class="form-control" name="date" type="date" required>
+              <button class="rounded-xl bg-amber-500 px-5 py-3 font-bold text-zinc-950" type="submit">Atur libur</button>
+            </form>
+            <p id="holiday-error" class="mt-3 hidden text-sm text-red-300" role="alert"></p>
+            <ul id="holiday-list" class="mt-4 divide-y divide-zinc-800"></ul>
+          </article>
+          <article class="rounded-2xl border border-zinc-800 bg-panel p-5 sm:p-6">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"><div><h3 class="display text-2xl font-semibold uppercase">Laporan omzet</h3><p class="mt-1 text-sm text-zinc-500">Hanya booking berstatus lunas yang dihitung.</p></div><label class="block text-sm text-zinc-300">Tanggal<input id="report-date" class="form-control mt-2" type="date"></label></div>
+            <p id="report-total" class="mt-5 display text-4xl font-bold text-emerald-400">Rp 0</p>
+            <h4 class="mt-5 text-xs font-bold uppercase tracking-wider text-zinc-500">Pelanggan dan omzet per kapster</h4>
+            <ul id="report-barbers" class="mt-3 divide-y divide-zinc-800"></ul>
+            <p id="report-error" class="mt-3 hidden text-sm text-red-300" role="alert"></p>
+          </article>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <dialog id="walkin-modal" class="w-[calc(100%-2rem)] max-w-lg rounded-2xl border border-zinc-700 bg-zinc-900 p-0 text-zinc-100 shadow-2xl">
+    <div class="flex items-start justify-between border-b border-zinc-800 p-5 sm:p-6"><div><p class="text-xs font-bold uppercase tracking-[.25em] text-amber-400">Pelanggan langsung</p><h2 class="mt-1 display text-2xl font-semibold uppercase">Tambah walk-in</h2></div><button id="close-walkin-modal" class="grid h-9 w-9 place-items-center rounded-lg border border-zinc-700 text-zinc-400 hover:text-white" type="button" aria-label="Tutup">×</button></div>
+    <form id="walkin-form" class="space-y-4 p-5 sm:p-6">
+      <label class="block text-sm font-medium text-zinc-300">Nama pelanggan<input class="form-control mt-2" name="name" maxlength="60" required></label>
+      <label class="block text-sm font-medium text-zinc-300">WhatsApp <span class="text-zinc-500">(opsional)</span><input class="form-control mt-2" name="phone" type="tel" maxlength="20"></label>
+      <div class="grid gap-4 sm:grid-cols-2">
+        <label class="block text-sm font-medium text-zinc-300">Layanan<select id="walkin-service" class="form-control mt-2" name="service" required><option value="" disabled selected>Pilih layanan</option></select></label>
+        <label class="block text-sm font-medium text-zinc-300">Kapster<select id="walkin-barber" class="form-control mt-2" name="barber" required><option value="" disabled selected>Pilih kapster</option></select></label>
+        <label class="block text-sm font-medium text-zinc-300">Tanggal<input id="walkin-date" class="form-control mt-2" name="date" type="date" required></label>
+        <label class="block text-sm font-medium text-zinc-300">Jam<select id="walkin-time" class="form-control mt-2" name="time" required><option value="" disabled selected>Pilih slot</option></select></label>
+      </div>
+      <p id="walkin-error" class="hidden rounded-lg border border-red-900 bg-red-950/50 px-4 py-3 text-sm text-red-300" role="alert"></p>
+      <div class="flex flex-col-reverse gap-3 pt-1 sm:flex-row sm:justify-end"><button id="cancel-walkin" class="rounded-xl border border-zinc-700 px-5 py-3 font-semibold text-zinc-300" type="button">Kembali</button><button class="rounded-xl bg-amber-500 px-5 py-3 font-bold text-zinc-950" type="submit">Simpan antrian</button></div>
+    </form>
+  </dialog>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
